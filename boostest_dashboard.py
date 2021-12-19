@@ -1,45 +1,45 @@
-from .api_utils import create_boostest_url
-
 import dash
-from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
+import pandas as pd
+from dash.dependencies import Input, Output
 
-from pandas_datareader import data as web
-from datetime import datetime as dt
+from api_utils import create_boostest_url
 
-app = dash.Dash('Hello World')
+app = dash.Dash("Hello Boosted World")
 
 app.layout = html.Div([
     dcc.Dropdown(
-        id='my-dropdown',
+        id="metric-dropdown",
         options=[
-            {'label': 'Coke', 'value': 'COKE'},
-            {'label': 'Tesla', 'value': 'TSLA'},
-            {'label': 'Apple', 'value': 'AAPL'}
+            {"label": readable_label, "value": column_name}
+            for readable_label, column_name in [
+                ("1st doses (%)", "cumVaccinationFirstDoseUptakeByPublishDatePercentage"),
+                ("2nd doses (%)", "cumVaccinationSecondDoseUptakeByPublishDatePercentage"),
+                ("Boosters (%)", "cumVaccinationThirdInjectionUptakeByPublishDatePercentage"),
+                ("LFD tests", "newLFDTestsBySpecimenDate"),
+                ("PCR tests", "newPCRTestsByPublishDate"),
+            ]
         ],
-        value='COKE'
+        value="cumVaccinationThirdInjectionUptakeByPublishDatePercentage"
     ),
-    dcc.Graph(id='my-graph')
-], style={'width': '500'})
+    dcc.Graph(id="metric-graph")
+], style={"width": "500"})
 
-@app.callback(Output('my-graph', 'figure'), [Input('my-dropdown', 'value')])
+@app.callback(Output("metric-graph", "figure"), [Input("metric-dropdown", "value")])
 def update_graph(selected_dropdown_value):
-    df = web.DataReader(
-        selected_dropdown_value,
-        'google',
-        dt(2017, 1, 1),
-        dt.now()
+    df = pd.read_csv(
+        "sample_data.csv"
     )
     return {
-        'data': [{
-            'x': df.index,
-            'y': df.Close
+        "data": [{
+            "x": df.date,
+            "y": df[selected_dropdown_value],
         }],
-        'layout': {'margin': {'l': 40, 'r': 0, 't': 20, 'b': 30}}
+        "layout": {"margin": {"l": 40, "r": 0, "t": 20, "b": 30}}
     }
 
-app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
+app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run_server()
